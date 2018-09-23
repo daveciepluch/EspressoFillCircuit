@@ -25,18 +25,10 @@
 #include "Configuration.h"
 
 // Include Melody library and Sensors class
-#include "Melody.h"
 #include "Sensors.h"
 
-
-
-// Setup melodies
-Melody sw_melody(5); // include pin
-Melody alert(5); // include pin
 // Setup sensor pins
 Sensors boiler(9);
-Sensors upper_water(3);
-Sensors lower_water(2);
 
 // Status for heater valve and pump
 int heat_state = 1;
@@ -44,48 +36,26 @@ int pump_state = 0; // pump and valve are shared
 
 long pump_time = 0;
 
-// We are going to do a 5% chance to play star wars theme when it starts up
-int sw = random(20);
-
 void setup() {
     Serial.begin(9600);
- 
-    // Star Wars Imperial March
-    // Because who doesn't want to listen to that first thing in the morning
-    int g4 = 392; int ds4 = 311; int as4 = 466; int d5 = 587; int ds5 = 622; int fs4 = 370;
-    int sw_notes[] = {0,g4,g4,g4,ds4,as4,g4,ds4,as4,g4,d5,d5,d5,ds5,as4,fs4,ds4,as4,g4};
-    int sw_beats[] = {1,3,3,3,2,1,3,2,1,4,3,3,3,2,1,3,2,1,4};
-    sw_melody.create(sw_notes, sw_beats, 19, 0, 600, 1000);
-    sw_melody.start();
-
-    // Alert Tone for low water
-    int a = 880; int R = 0;
-    int alert_notes[] = {R,a,a,a,R,R,R,R};
-    int alert_beats[] = {2,1,1,1,4,4,4,4};
-    alert.create(alert_notes, alert_beats, 8, 1, 1000, 1000);
-  
+    
     // Output mode for relays
     pinMode(PUMP, OUTPUT);       
     pinMode(VALVE, OUTPUT);
     pinMode(HEAT, OUTPUT);
-
+   
     // Initialize relays
     // Pump and value off, Heat on
     // Heat is on N/O relay
     digitalWrite(PUMP, HIGH);
     digitalWrite(VALVE, HIGH);  
     digitalWrite(HEAT, HIGH);
-  
 }
 
 // Serial Output for debugging
 void debug_output(){
     Serial.print("Boiler: ");
     Serial.println(boiler.value);
-    Serial.print("Upper Water: ");
-    Serial.println(upper_water.value);
-    Serial.print("Lower Water: ");
-    Serial.println(lower_water.value);
     delay(250);
 }
 
@@ -128,29 +98,6 @@ void toggle_pump(int state){
 void check_sensors(){
     // Read Sensors
     boiler.check();
-    upper_water.check();
-    lower_water.check();
-    // If upper water sensor 0 trigger alert
-    if(upper_water.value == 0){
-        // start alert melody
-        if(alert.melody_status == 0){
-            alert.start();
-        }
-        alert.loop_();
-    }else{
-        // Make sure alert is not playing
-        if(alert.melody_status == 1){
-            alert.stop_();
-        }
-    }// end upper check
-    // If lower water sensor 0 shut off power to heating element
-    if(lower_water.value == 0){
-        toggle_heat(0);
-        // also turn off pump so it doesn't run dry
-        toggle_pump(0);
-    }else{
-        toggle_heat(1);
-    }
     // If boiler water is low turn on pump
     if(boiler.value == 0 && lower_water.value != 0){
         toggle_pump(1);
@@ -159,12 +106,8 @@ void check_sensors(){
     }
 }
 
-
 // Main Loop
 void loop() {
-    if(sw == 0 ){
-        sw_melody.loop_();
-    }
     // read sensors
     check_sensors();  
     // Debug Output
