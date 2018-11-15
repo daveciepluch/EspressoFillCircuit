@@ -1,24 +1,19 @@
-/*   Andreja Premium Control Board Replacement 
- *   Written By Anthony DiPilato
- *   
- *   This project replaces the Gicar control board from a Quickmill Andreja Premium with
- *   an Arduino Uno, a four channel relay board (3 channels used), and a piezo buzzer.
- *   $20 in parts to replace a ~$200 control board.
- *   
- *   Additional details can be found at [url]
- *   
- *   The arduino monitors the two float switches in the water reservior and the water level probe in the boiler.
- *   The boiler temperature is maintained by the pressurestat.
- *   
- *   Upper float switch triggers audible alarm.
- *   Lower switch cuts power to the boiler to protect the heating element from overheating.
- *   Water probe triggers the water pump and actuated valve to fill the boiler.
- *   
+/*   Basic Fill Box Replacement:
+ *    Utilizes factory autofill probe (Nuova Simonelli Oscar)
+ *    Utilizes G3MB-202P PCB SSR for autofill control
+ *    Utilizes Arduino Uno R3
+ *  
  *   USE AT YOUR ON RISK.
  *   I am posting this project for EDUCATIONAL USE ONLY.
  *   This project involves electricity, high heat, and water/steam.
  *   I will not be held liable damages and/or injuries resulting from the use of this code or from copying this project.
  *   
+ *   This is a fork of:
+ *   Andreja Premium Control Board Replacement 
+ *   Written By Anthony DiPilato
+ *   
+ *   It has been simplified to have no buzzer or float switches for plumbed in models.
+ *   Additionally, I have adapted the triggers for the pump/valve for use with a solid state relay (had to reverse readings).
  */
 
 // Configuration
@@ -38,18 +33,19 @@ long pump_time = 0;
 
 void setup() {
     Serial.begin(9600);
-    
+  
     // Output mode for relays
     pinMode(PUMP, OUTPUT);       
     pinMode(VALVE, OUTPUT);
     pinMode(HEAT, OUTPUT);
-   
+
     // Initialize relays
-    // Pump and value off, Heat on
+    // Pump and valve off, Heat on
     // Heat is on N/O relay
     digitalWrite(PUMP, HIGH);
     digitalWrite(VALVE, HIGH);  
     digitalWrite(HEAT, HIGH);
+  
 }
 
 // Serial Output for debugging
@@ -99,10 +95,10 @@ void check_sensors(){
     // Read Sensors
     boiler.check();
     // If boiler water is low turn on pump
-    if(boiler.value == 0 && lower_water.value != 0){
-        toggle_pump(1);
-    }else{
+    if(boiler.value == 0){
         toggle_pump(0);
+    }else{
+        toggle_pump(1);
     }
 }
 
